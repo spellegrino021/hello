@@ -1,0 +1,47 @@
+name: Trigger auto deployment for pg393
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ master ]
+    paths:
+    - '//**'
+    - '.github/workflows/pg393-AutoDeployTrigger-7eb62d07-87ca-4fd4-8ef8-19c7e200a9dc.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.PG393_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.PG393_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.PG393_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }} 
+          registryUrl: containerregistryhzj63lwpyx4ao.azurecr.io
+          registryUsername: ${{ secrets.PG393_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.PG393_REGISTRY_PASSWORD }}
+          containerAppName: pg393
+          resourceGroup: nextjs14a51b
+          imageToBuild: containerregistryhzj63lwpyx4ao.azurecr.io/pg393:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
