@@ -1,0 +1,47 @@
+name: Trigger auto deployment for hi903284
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ master ]
+    paths:
+    - '//**'
+    - '.github/workflows/hi903284-AutoDeployTrigger-2390fcd4-d3d2-40bb-bc68-4745a9560ca6.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.HI903284_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.HI903284_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.HI903284_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }} 
+          registryUrl: containerregistryccdwq2ipni5tq.azurecr.io
+          registryUsername: ${{ secrets.HI903284_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.HI903284_REGISTRY_PASSWORD }}
+          containerAppName: hi903284
+          resourceGroup: nextjsisrdemo9110
+          imageToBuild: containerregistryccdwq2ipni5tq.azurecr.io/hi903284:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
